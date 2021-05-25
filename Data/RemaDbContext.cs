@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RemApi.Models;
 
-namespace RemApi.Models
+namespace RemApi.Data
 {
     public class RemaDbContext : DbContext
     {

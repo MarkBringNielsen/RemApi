@@ -1,4 +1,5 @@
 using System;
+using RemApi.Acquaintances;
 using RemApi.DTOs;
 
 namespace RemApi.Models

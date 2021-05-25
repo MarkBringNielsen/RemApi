@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RemApi.Models;
 using RemApi.DTOs;
+using RemApi.Data;
+using RemApi.Services;
 
 namespace RemApi.Controllers
 {
@@ -15,26 +17,31 @@ namespace RemApi.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly RemaDbContext _context;
+        private readonly CreateService<Product> _createService;
+        private readonly ProductReadService _readService;
+        private readonly UpdateService<Product> _updateService;
+        private readonly DeleteService<Product> _deleteService;
 
         public ProductsController(RemaDbContext context)
         {
             _context = context;
+            _createService = new CreateService<Product>(context.Products, context);
+            _readService = new ProductReadService(context.Products);
+            _updateService = new UpdateService<Product>(context.Products, context);
+            _deleteService = new DeleteService<Product>(context.Products, context);
         }
 
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            return await _context.Products.Include(p => p.Category).Include(p => p.Supplier).ToListAsync();
+            return Ok(await _readService.GetAsync());
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(Guid id)
         {
-            var product = await GetByID(id);
-            if(product == null) { return NotFound(); }
-
-            return product;
+            return await _readService.GetAsync(id);
         }
 
         [HttpPost]
@@ -43,13 +50,11 @@ namespace RemApi.Controllers
             var supplier = await _context.Suppliers.FindAsync(product.SupplierID);
             if (supplier == null) { return BadRequest("Supplier does not exist"); }
         
-            
             var category = await _context.Categories.FindAsync(product.CategoryID);
-            if (category == null) { return BadRequest("Category does not exist"); }
+            if (category == null) { return BadRequest("Categhory does not exist"); }
             
             var newProduct = new Product(product, category, supplier);
-            _context.Products.Add(newProduct);
-            await _context.SaveChangesAsync();
+            await _createService.Create(newProduct);
 
             return CreatedAtAction(nameof(GetProducts), newProduct);
         }
@@ -62,38 +67,20 @@ namespace RemApi.Controllers
         
             
             var category = await _context.Categories.FindAsync(product.CategoryID);
-            if (category == null) { return BadRequest("Category does not exist"); }
+            if (category == null) { return BadRequest("Product does not exist"); }
             
 
-            _context.Entry(new Product(product, category, supplier, id)).State = EntityState.Modified;
+            await _updateService.Update(new Product(product, category, supplier, id));
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Products.Any(s => s.ID == id)) { return NotFound(); }
-                else { throw; }
-            }
-
-            return await GetByID(id);
+            return await _readService.GetAsync(id);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProduct(Guid id)
         {
-            var product = await _context.Products.Include(p => p.Supplier).Include(p => p.Category).FirstOrDefaultAsync(p => p.ID == id);
-            if (product == null) { return NotFound();}
-
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            await _deleteService.DeleteAsync(id);
 
             return NoContent();
-        }
-    
-        private async Task<ActionResult<Product>> GetByID(Guid id){
-            return await _context.Products.Include(p => p.Supplier).Include(p => p.Category).FirstOrDefaultAsync(p => p.ID == id);
         }
     }
 

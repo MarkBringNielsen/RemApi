@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RemApi.Models;
 using RemApi.DTOs;
+using RemApi.Data;
+using RemApi.Services;
 
 namespace RemApi.Controllers
 {
@@ -15,23 +17,31 @@ namespace RemApi.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly RemaDbContext _context;
+        private readonly CreateService<Category> _createService;
+        private readonly ReadService<Category> _readService;
+        private readonly UpdateService<Category> _updateService;
+        private readonly DeleteService<Category> _deleteService;
 
         public CategoriesController(RemaDbContext context)
         {
             _context = context;
+            _createService = new CreateService<Category>(context.Categories, context);
+            _readService = new ReadService<Category>(context.Categories);
+            _updateService = new UpdateService<Category>(context.Categories, context);
+            _deleteService = new DeleteService<Category>(context.Categories, context);
         }
 
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
         {
-            return await _context.Categories.ToListAsync();
+            return Ok(await _readService.GetAsync());
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Category>> GetCategory(Guid id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _readService.GetAsync(id);
             if (category == null) { return NotFound(); }
 
             return category;
