@@ -1,9 +1,10 @@
 using System;
+using RemApi.Acquaintances;
 using RemApi.DTOs;
 
 namespace RemApi.Models
 {
-    public class Category
+    public class Category : IIdentifiable
     {
         public Guid ID { get; set; }
         public string Name { get; set; }

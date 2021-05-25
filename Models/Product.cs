@@ -1,9 +1,10 @@
 using System;
 using RemApi.DTOs;
+using RemApi.Acquaintances;
 
 namespace RemApi.Models
 {
-    public class Product
+    public class Product : IIdentifiable
     {
 
         public Product() {}

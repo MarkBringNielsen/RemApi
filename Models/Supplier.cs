@@ -3,7 +3,7 @@ using RemApi.DTOs;
 
 namespace RemApi.Models
 {
-    public class Supplier
+    public class Supplier : IIdentifiable
     {
         public Guid ID { get; set; }
         public string Name { get; set; }
